@@ -13,7 +13,9 @@ in Git.
 - GitHub is the source of truth; no Git checkout is required on the Pi.
 - Arcane projects directory: `$HOME/gitops`, mounted at `/projects`. This is
   a managed workspace, not a Git checkout.
-- Arcane bootstrap Compose and local environment: `$HOME/arcane`.
+- Arcane bootstrap Compose and local environment: `$HOME/compose.yaml` and
+  `$HOME/.env`, directly in the home directory, not in an `arcane` subdirectory.
+  The repository retains its `arcane/` directory as the source template.
 - Application data: `$HOME/containers`, separate from the project workspace.
 - Each application is a separate Compose project and Arcane Git Pull project:
   `mpd`, `mympd`, `music-assistant`, and `newt`.

@@ -41,8 +41,9 @@ Arcane is included for reproducibility, but bootstrap it manually before
 configuring Arcane to deploy the other projects:
 
 1. Copy this repository's Arcane Compose file and `.env.example` to
-   `$HOME/arcane`. No full Git checkout is needed on the Pi.
-2. In `$HOME/arcane`, copy `.env.example` to `.env`.
+   `$HOME/compose.yaml` and `$HOME/.env.example`. No full Git checkout is
+   needed on the Pi. Keep these separate from the `$HOME/gitops` workspace.
+2. In `$HOME`, copy `.env.example` to `.env`.
 3. Generate an encryption key with `openssl rand -hex 32`, then set it as
    `ENCRYPTION_KEY` in the local `.env`.
 4. Arcane uses `$HOME/containers/arcane` for its application data and
@@ -53,7 +54,7 @@ configuring Arcane to deploy the other projects:
    **Customization -> Variables**, scoped to the Pi environment. Arcane writes
    this to `.env.global`; project-local `.env` values override it. Arcane may
    not inherit the Pi host's `HOME`.
-   Set `APP_URL` in the local `arcane/.env` to the address you use to open
+   Set `APP_URL` in `$HOME/.env` to the address you use to open
    the dashboard.
 5. Create the data directory and give it to the configured Arcane user:
 
@@ -62,7 +63,7 @@ configuring Arcane to deploy the other projects:
    sudo chown 1000:1000 "$HOME/containers/arcane" "$HOME/gitops"
    ```
 
-6. From `$HOME/arcane`, start Arcane with `docker compose up -d`.
+6. From `$HOME`, start Arcane with `docker compose up -d`.
 7. Sign in, change the initial password, and connect this repository using
    read-only Git credentials.
 8. Create a **Pull** sync for each application project. Add Newt's endpoint
@@ -100,7 +101,7 @@ View logs through Arcane or `docker logs`.
 
 The settings take effect when containers are recreated, not merely restarted.
 After syncing the changes, recreate each application through Arcane. Update
-the manually managed Compose file in `$HOME/arcane` separately, validate it,
+the manually managed `$HOME/compose.yaml` separately, validate it,
 and run `docker compose up -d --pull never` there to apply Arcane's logging
 configuration without intentionally updating its image. Persistent bind
 mounts are retained; do not select options that delete or recreate data volumes.
@@ -111,7 +112,7 @@ Git restores configuration, not application state. Before a failure, keep
 encrypted off-device backups of:
 
 - `$HOME/containers`, including Arcane's database and application state.
-- `$HOME/arcane`, including its local `.env` and original encryption key.
+- `$HOME/compose.yaml` and `$HOME/.env`, including the original encryption key.
 - Local environment files under `$HOME/gitops`, including Newt's credentials
   and `.env.global`. Backing up the whole workspace also preserves local
   project files.
@@ -129,16 +130,17 @@ automation is not configured by these Compose files; test restoration.
    Recreate the service user with the original UID/GID where possible; these
    Compose files expect `1000:1000` and MPD uses audio group ID `29`.
    Verify sound devices and group IDs on the replacement host.
-2. Before starting any containers, restore `$HOME/containers`, `$HOME/arcane`,
-   and the workspace/local environment backups to their intended paths.
+2. Before starting any containers, restore `$HOME/containers`,
+   `$HOME/compose.yaml`, `$HOME/.env`, and the workspace/local environment
+   backups to their intended paths.
    Preserve ownership and permissions. If the home directory changes, update
    Arcane's global `HOME` and any project-local overrides before deploying.
-3. If `$HOME/arcane` is unavailable, obtain `arcane/compose.yaml` and the
+3. If `$HOME/compose.yaml` is unavailable, obtain `arcane/compose.yaml` and the
    environment template from GitHub and follow [Arcane bootstrap](#arcane-bootstrap).
    When restoring an existing Arcane database, use its **original encryption
    key**, not a newly generated one. Without that key, encrypted credentials
    may need to be re-entered or Arcane reconfigured.
-4. From `$HOME/arcane`, run `docker compose config --quiet`, check the
+4. From `$HOME`, run `docker compose config --quiet`, check the
    resolved mounts, and start Arcane with `docker compose up -d`.
    Prefer the backed-up image version/digest if recorded; mutable tags may
    now resolve to a different release.
