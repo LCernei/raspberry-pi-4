@@ -1,0 +1,21 @@
+name: newt
+
+services:
+  newt:
+    image: fosrl/newt:latest
+    container_name: newt
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PANGOLIN_ENDPOINT
+      - NEWT_ID
+      - NEWT_SECRET
+    networks:
+      - default
+      - mympd
+
+networks:
+  mympd:
+    external: true
+    name: mympd_default
