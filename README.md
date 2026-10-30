@@ -2,6 +2,9 @@
 
 GitOps-managed container services for my Raspberry Pi.
 
+AI assistants should start with [AGENTS.md](AGENTS.md), which points to the
+deployment specification and verified operational lessons.
+
 ## Repository layout
 
 Each directory is an independent Compose project:
