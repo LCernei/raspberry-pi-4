@@ -14,7 +14,12 @@ services:
       USER_MODE: "yes"
       AUDIO_GID: "29"
     volumes:
-      - ${HOME}/containers/mpd/music:/music:ro
-      - ${HOME}/containers/mpd/playlists:/playlists
-      - ${HOME}/containers/mpd/db:/db
+      - ${HOME:?HOME must be configured}/containers/mpd/music:/music:ro
+      - ${HOME:?HOME must be configured}/containers/mpd/playlists:/playlists
+      - ${HOME:?HOME must be configured}/containers/mpd/db:/db
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

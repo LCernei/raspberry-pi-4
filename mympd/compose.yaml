@@ -12,14 +12,19 @@ services:
       MYMPD_SSL: "false"
       MYMPD_HTTP_PORT: "8080"
     volumes:
-      - ${HOME}/containers/mympd/workdir:/var/lib/mympd
-      - ${HOME}/containers/mympd/cachedir:/var/cache/mympd
-      - ${HOME}/containers/mpd/music:/var/lib/mpd/music:ro
-      - ${HOME}/containers/mpd/playlists:/var/lib/mpd/playlists:ro
+      - ${HOME:?HOME must be configured}/containers/mympd/workdir:/var/lib/mympd
+      - ${HOME:?HOME must be configured}/containers/mympd/cachedir:/var/cache/mympd
+      - ${HOME:?HOME must be configured}/containers/mpd/music:/var/lib/mpd/music:ro
+      - ${HOME:?HOME must be configured}/containers/mpd/playlists:/var/lib/mpd/playlists:ro
     networks:
       - default
       - mpd
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 networks:
   mpd:

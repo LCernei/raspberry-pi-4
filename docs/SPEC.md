@@ -34,12 +34,15 @@ in Git.
 - **Music Assistant** uses host networking for discovery and streaming.
 - Preserve stable service/container names unless explicitly changed by the
   user.
+- All five services use Docker's `json-file` logging driver with `max-size:
+  "10m"` and `max-file: "3"`. These limits cover container stdout/stderr,
+  not log files written inside application data directories.
 
 ## Data and secrets
 
 - Intended persistent application data paths are below
   `$HOME/containers/<project>/`.
-- Compose host paths use `${HOME}` rather than a user-specific absolute home
+- Compose host paths use `${HOME:?HOME must be configured}` rather than a user-specific absolute home
   path. Arcane deployments must receive the correct `HOME` value; verify this
   through Arcane's environment-scoped global Variables before deploying.
   Project-local `.env` values override the shared value.

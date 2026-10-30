@@ -5,8 +5,13 @@ services:
     image: ghcr.io/music-assistant/server:latest
     container_name: music-assistant
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     network_mode: host
     volumes:
-      - ${HOME}/containers/music-assistant/data:/data/
+      - ${HOME:?HOME must be configured}/containers/music-assistant/data:/data/
     environment:
       LOG_LEVEL: info
