@@ -37,8 +37,8 @@ holds its encryption key.
 Arcane is included for reproducibility, but bootstrap it manually before
 configuring Arcane to deploy the other projects:
 
-1. Clone this repository on the Pi, for example to
-   `$HOME/containers/rpi-gitops`.
+1. Clone this repository on the Pi to `$HOME/gitops`. Keep this checkout
+   outside `$HOME/containers`, which Arcane uses for deployed projects.
 2. In `arcane/`, copy `.env.example` to `.env`.
 3. Generate an encryption key with `openssl rand -hex 32`, then set it as
    `ENCRYPTION_KEY` in the local `.env`.
@@ -56,7 +56,7 @@ configuring Arcane to deploy the other projects:
    sudo chown 1000:1000 "$HOME/containers/arcane"
    ```
 
-6. From `arcane/`, start Arcane with `docker compose up -d`.
+6. From `$HOME/gitops/arcane/`, start Arcane with `docker compose up -d`.
 7. Sign in, change the initial password, and connect this repository using
    read-only Git credentials.
 8. Create a **Pull** sync for each application project. Add Newt's endpoint
