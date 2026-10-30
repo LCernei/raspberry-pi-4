@@ -10,8 +10,11 @@ in Git.
 
 ## Layout
 
-- Git source checkout: `$HOME/gitops`.
-- Arcane projects directory: `$HOME/containers`.
+- GitHub is the source of truth; no Git checkout is required on the Pi.
+- Arcane projects directory: `$HOME/gitops`, mounted at `/projects`. This is
+  a managed workspace, not a Git checkout.
+- Arcane bootstrap Compose and local environment: `$HOME/arcane`.
+- Application data: `$HOME/containers`, separate from the project workspace.
 - Each application is a separate Compose project and Arcane Git Pull project:
   `mpd`, `mympd`, `music-assistant`, and `newt`.
 - Arcane is bootstrapped separately from the other application projects.
@@ -38,7 +41,8 @@ in Git.
   `$HOME/containers/<project>/`.
 - Compose host paths use `${HOME}` rather than a user-specific absolute home
   path. Arcane deployments must receive the correct `HOME` value; verify this
-  in Arcane's project environment before deploying.
+  through Arcane's environment-scoped global Variables before deploying.
+  Project-local `.env` values override the shared value.
 - Real environment files, credentials, and encryption keys stay local and
   are excluded from Git. Commit only placeholder `.env.example` files.
 - Arcane's encryption key must be backed up securely with Arcane's application
@@ -46,15 +50,31 @@ in Git.
 
 ## Current migration state
 
-The Compose files describe the intended `$HOME/containers` data paths, but
-the existing application stacks have not yet been migrated from
-`$HOME/docker`. Do not deploy the changed mounts until each service's data has
-been copied, checked, and the migration is approved.
+The migration is complete. The user confirmed all applications work and
+their data is present after the final Arcane deployments.
 
-Arcane is currently running with application data at
-`$HOME/containers/arcane`, while `$HOME/containers` is its configured projects
-directory. Resolve this path overlap before configuring an Arcane Git Pull
-project named `arcane`; never sync over Arcane's live application data.
+MPD, myMPD, Music Assistant, and Newt have been recreated through Arcane Git
+Pull in `$HOME/gitops`, with persistent data under `$HOME/containers`.
+All five containers, including Arcane, were verified running with zero
+restarts; application bind mounts and cross-project networks were checked.
+myMPD and Music Assistant returned HTTP 200 after recreation.
+Application data and local secrets were retained. After functional verification,
+the previous MPD, myMPD, and Music Assistant data under `$HOME/docker` was
+removed with the user's approval. Dockge was subsequently stopped and removed,
+including its files and the empty `$HOME/docker` directory. Arcane is the sole
+deployment manager. Newt has no persistent bind-mounted application data.
+
+Basic runtime checks passed after migration: MPD returned its protocol
+greeting, myMPD returned HTTP 200 and connected to MPD, Music Assistant
+returned HTTP 200 on port 8095, and Newt was running on `mympd_default`.
+The user subsequently confirmed successful use of all applications.
+
+Arcane is bootstrapped separately, with application data at
+`$HOME/containers/arcane` and `$HOME/gitops` as its projects directory.
+The former checkout is no longer present. Temporary migration backups were
+removed with the user's approval; active application data and local
+configuration remain intact. Never sync a project over Arcane's live
+application data.
 
 ## Change acceptance checks
 

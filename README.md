@@ -40,26 +40,29 @@ holds its encryption key.
 Arcane is included for reproducibility, but bootstrap it manually before
 configuring Arcane to deploy the other projects:
 
-1. Clone this repository on the Pi to `$HOME/gitops`. Keep this checkout
-   outside `$HOME/containers`, which Arcane uses for deployed projects.
-2. In `arcane/`, copy `.env.example` to `.env`.
+1. Copy this repository's Arcane Compose file and `.env.example` to
+   `$HOME/arcane`. No full Git checkout is needed on the Pi.
+2. In `$HOME/arcane`, copy `.env.example` to `.env`.
 3. Generate an encryption key with `openssl rand -hex 32`, then set it as
    `ENCRYPTION_KEY` in the local `.env`.
 4. Arcane uses `$HOME/containers/arcane` for its application data and
-   `$HOME/containers` as its projects directory. Compose expands `$HOME` from the
+   `$HOME/gitops` as its projects directory. This is an Arcane-managed workspace,
+   not a Git checkout. Compose expands `$HOME` from the
    environment of the process doing deployment. For Arcane Git Sync, set
-   `HOME` to the Pi user's home directory (`/home/lc`) in each project's local
-   environment settings; Arcane may not inherit the Pi host's `HOME`.
+   `HOME` to the Pi user's home directory (for example `/home/example`) through
+   **Customization -> Variables**, scoped to the Pi environment. Arcane writes
+   this to `.env.global`; project-local `.env` values override it. Arcane may
+   not inherit the Pi host's `HOME`.
    Set `APP_URL` in the local `arcane/.env` to the address you use to open
    the dashboard.
 5. Create the data directory and give it to the configured Arcane user:
 
    ```sh
-   sudo mkdir -p "$HOME/containers/arcane"
-   sudo chown 1000:1000 "$HOME/containers/arcane"
+   sudo mkdir -p "$HOME/containers/arcane" "$HOME/gitops"
+   sudo chown 1000:1000 "$HOME/containers/arcane" "$HOME/gitops"
    ```
 
-6. From `$HOME/gitops/arcane/`, start Arcane with `docker compose up -d`.
+6. From `$HOME/arcane`, start Arcane with `docker compose up -d`.
 7. Sign in, change the initial password, and connect this repository using
    read-only Git credentials.
 8. Create a **Pull** sync for each application project. Add Newt's endpoint
@@ -85,8 +88,10 @@ Compose project.
 
 ## Existing Pi data
 
-The Compose files now use `$HOME/containers` for persistent application data.
-The currently running stacks still use data under `$HOME/docker`; move or copy
-their data to the corresponding new paths before deploying these Compose files.
-Do not delete the old data until the new deployments have been verified. Git
-history tracks configuration, not persistent application data.
+The Pi's application data has been migrated to `$HOME/containers`. All four
+application projects have been recreated through Arcane Git Pull in `$HOME/gitops`.
+The user verified all applications and their data after deployment; the
+migration is complete. The old MPD, myMPD, and Music Assistant data under
+`$HOME/docker` was removed with the user's approval. Dockge was subsequently
+stopped and removed along with its files and the empty `$HOME/docker` directory.
+Git history tracks configuration, not persistent application data.

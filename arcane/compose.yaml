@@ -9,7 +9,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${HOME}/containers/arcane:/app/data
-      - ${HOME}/containers:/projects
+      - ${HOME}/gitops:/projects
     environment:
       - APP_URL
       - PUID=1000
