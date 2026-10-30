@@ -42,12 +42,13 @@ configuring Arcane to deploy the other projects:
 
 1. Copy this repository's Arcane Compose file and `.env.example` to
    `$HOME/compose.yaml` and `$HOME/.env.example`. No full Git checkout is
-   needed on the Pi. Keep these separate from the `$HOME/gitops` workspace.
+   needed on the Pi. Keep these separate from the
+   `$HOME/containers/arcane/projects` workspace.
 2. In `$HOME`, copy `.env.example` to `.env`.
 3. Generate an encryption key with `openssl rand -hex 32`, then set it as
    `ENCRYPTION_KEY` in the local `.env`.
-4. Arcane uses `$HOME/containers/arcane` for its application data and
-   `$HOME/gitops` as its projects directory. This is an Arcane-managed workspace,
+4. Arcane uses `$HOME/containers/arcane/data` for its application data and
+   `$HOME/containers/arcane/projects` as its projects directory. This is an Arcane-managed workspace,
    not a Git checkout. Compose expands `$HOME` from the
    environment of the process doing deployment. For Arcane Git Sync, set
    `HOME` to the Pi user's home directory (for example `/home/example`) through
@@ -59,8 +60,8 @@ configuring Arcane to deploy the other projects:
 5. Create the data directory and give it to the configured Arcane user:
 
    ```sh
-   sudo mkdir -p "$HOME/containers/arcane" "$HOME/gitops"
-   sudo chown 1000:1000 "$HOME/containers/arcane" "$HOME/gitops"
+   sudo mkdir -p "$HOME/containers/arcane/data" "$HOME/containers/arcane/projects"
+   sudo chown 1000:1000 "$HOME/containers/arcane/data" "$HOME/containers/arcane/projects"
    ```
 
 6. From `$HOME`, start Arcane with `docker compose up -d`.
@@ -113,7 +114,7 @@ encrypted off-device backups of:
 
 - `$HOME/containers`, including Arcane's database and application state.
 - `$HOME/compose.yaml` and `$HOME/.env`, including the original encryption key.
-- Local environment files under `$HOME/gitops`, including Newt's credentials
+- Local environment files under `$HOME/containers/arcane/projects`, including Newt's credentials
   and `.env.global`. Backing up the whole workspace also preserves local
   project files.
 - Git repository credentials and recovery information in a password manager.
@@ -178,7 +179,8 @@ automation is not configured by these Compose files; test restoration.
 ## Existing Pi data
 
 The Pi's application data has been migrated to `$HOME/containers`. All four
-application projects have been recreated through Arcane Git Pull in `$HOME/gitops`.
+application projects have been recreated through Arcane Git Pull. Their workspace
+is now `$HOME/containers/arcane/projects`.
 The user verified all applications and their data after deployment; the
 migration is complete. The old MPD, myMPD, and Music Assistant data under
 `$HOME/docker` was removed with the user's approval. Dockge was subsequently

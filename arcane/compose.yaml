@@ -8,8 +8,8 @@ services:
       - "3552:3552"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ${HOME:?HOME must be configured}/containers/arcane:/app/data
-      - ${HOME:?HOME must be configured}/gitops:/projects
+      - ${HOME:?HOME must be configured}/containers/arcane/data:/app/data
+      - ${HOME:?HOME must be configured}/containers/arcane/projects:/projects
     environment:
       - APP_URL
       - PUID=1000

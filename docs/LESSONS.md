@@ -8,15 +8,17 @@ no longer apply.
 
 Arcane scans its configured projects directory for Compose projects. A Git
 checkout nested inside that directory was discovered as a project itself.
-Keep any source checkout outside Arcane's `$HOME/gitops` projects directory.
+Keep any source checkout outside Arcane's projects directory
+(`$HOME/containers/arcane/projects`).
 That directory is now a managed workspace, not a checkout.
 
 ## 2026-10-30: Keep project workspaces separate from application data
 
 Arcane 2.17.1 refused to create a Git Pull project named `mpd` because its
 projects root already contained an `mpd` data directory. Use
-`$HOME/gitops` for Arcane-managed Compose files and keep application
-data under `$HOME/containers`. Never delete application data to resolve a
+`$HOME/containers/arcane/projects` for Arcane-managed Compose files, with
+Arcane's own data in the sibling `data` directory. Keep other application
+data under `$HOME/containers/<application>`. Never delete application data to resolve a
 project-name collision.
 
 ## 2026-10-30: Arcane Compose deployments may not have `HOME`
