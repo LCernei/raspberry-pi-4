@@ -7,10 +7,12 @@ deployment specification and verified operational lessons.
 
 ## Repository layout
 
-Each directory is an independent Compose project:
+Arcane is bootstrapped from the repository root. Each application directory
+is an independent Compose project:
 
 ```text
-arcane/             Arcane dashboard and Git deployment manager
+compose.yaml        Arcane dashboard and Git deployment manager
+.env.example        Arcane local environment template
 mpd/                MPD audio server
 mympd/              myMPD web interface
 music-assistant/    Music Assistant
@@ -40,7 +42,7 @@ holds its encryption key.
 Arcane is included for reproducibility, but bootstrap it manually before
 configuring Arcane to deploy the other projects:
 
-1. Copy this repository's Arcane Compose file and `.env.example` to
+1. Copy this repository's root `compose.yaml` and `.env.example` to
    `$HOME/compose.yaml` and `$HOME/.env.example`. No full Git checkout is
    needed on the Pi. Keep these separate from the
    `$HOME/containers/arcane/projects` workspace.
@@ -136,7 +138,7 @@ automation is not configured by these Compose files; test restoration.
    backups to their intended paths.
    Preserve ownership and permissions. If the home directory changes, update
    Arcane's global `HOME` and any project-local overrides before deploying.
-3. If `$HOME/compose.yaml` is unavailable, obtain `arcane/compose.yaml` and the
+3. If `$HOME/compose.yaml` is unavailable, obtain the root `compose.yaml` and the
    environment template from GitHub and follow [Arcane bootstrap](#arcane-bootstrap).
    When restoring an existing Arcane database, use its **original encryption
    key**, not a newly generated one. Without that key, encrypted credentials

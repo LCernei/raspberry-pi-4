@@ -15,7 +15,7 @@ in Git.
   a managed workspace, not a Git checkout.
 - Arcane bootstrap Compose and local environment: `$HOME/compose.yaml` and
   `$HOME/.env`, directly in the home directory, not in an `arcane` subdirectory.
-  The repository retains its `arcane/` directory as the source template.
+  The repository mirrors this with root-level `compose.yaml` and `.env.example`.
 - Application data: `$HOME/containers`, separate from the project workspace.
 - Each application is a separate Compose project and Arcane Git Pull project:
   `mpd`, `mympd`, `music-assistant`, and `newt`.
