@@ -27,7 +27,9 @@ credentials live only on the Pi and in backups.
 
 The laptop builds for the Pi (aarch64) under emulation:
 `boot.binfmt.emulatedSystems = [ "aarch64-linux" ];` in its NixOS config.
-`nix develop` provides `deploy` and `zstd`.
+The dev shell provides `deploy` and `zstd`. With direnv, it loads
+automatically in the repo (`.envrc`; run `direnv allow` once). Without
+direnv, prefix commands with `nix develop -c`.
 
 ## Recreate the SD card
 
@@ -126,6 +128,18 @@ access.
 Updates: `nix flake update` (or one input), build, deploy, verify.
 Music Assistant is pinned in `modules/music-assistant.nix` (tag and digest);
 update it together with Sendspin.
+
+## SSH access for more people
+
+On the Pi, as `pi`, add another GitHub user's public keys:
+
+```sh
+nix shell nixpkgs#ssh-import-id -c ssh-import-id gh:<github-user>
+```
+
+To revoke access, delete their lines from `~/.ssh/authorized_keys`. These
+keys live only on the card: a freshly flashed card imports just the user in
+`modules/github-ssh-keys.nix`, so repeat this after a reinstall.
 
 ## Secrets
 

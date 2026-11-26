@@ -50,7 +50,7 @@
       # `nix build .#sd-image` -> result/sd-image/*.img.zst, flashable to an SD card.
       packages.${devSystem}.sd-image = self.nixosConfigurations.rpi.config.system.build.sdImage;
 
-      # `deploy .#rpi`: build on the laptop, copy, activate; rolls back automatically
+      # `deploy .#rpi` (dev shell): build on the laptop, copy, activate; rolls back automatically
       # if the Pi cannot be reached over SSH after activation.
       deploy.nodes.rpi = {
         hostname = "rpi.local";

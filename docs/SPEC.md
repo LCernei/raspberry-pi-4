@@ -81,7 +81,8 @@ are not stored in Git.
 1. Compare changes with this spec and `docs/LESSONS.md`.
 2. `nix flake check` and build the system (`nix build
    .#nixosConfigurations.rpi.config.system.build.toplevel`).
-3. Deploy with `deploy .#rpi` (automatic rollback if SSH is lost).
+3. Deploy with `deploy .#rpi` from the dev shell (automatic rollback if SSH
+   is lost).
 4. Verify: SSH and Tailscale reachable, Music Assistant on port 8095, the
    Sendspin player present in Music Assistant and audible, the Newt tunnel
    works remotely.
