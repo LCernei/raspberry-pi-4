@@ -2,99 +2,95 @@
 
 ## Purpose and scope
 
-Manage the Raspberry Pi's home services as independent Docker Compose
-projects, with configuration in Git and Arcane providing a dashboard and
-Git-based deployment. The Git repository is the source of truth for Compose
-configuration; persistent application state and credentials are not stored
-in Git.
+The Raspberry Pi is a small, unattended music appliance that is rarely
+physically accessible. Its whole system is declared in this repository as a NixOS
+flake, so a fresh install is: build the SD image, flash it, restore
+application state. Persistent application state and plaintext credentials
+are not stored in Git.
 
-## Layout
+## Host
 
-- GitHub is the source of truth; no Git checkout is required on the Pi.
-- Arcane projects directory: `$HOME/containers/arcane/projects`, mounted at `/projects`. This is
-  a managed workspace, not a Git checkout.
-- Arcane bootstrap Compose and local environment: `$HOME/compose.yaml` and
-  `$HOME/.env`, directly in the home directory, not in an `arcane` subdirectory.
-  The repository mirrors this with root-level `compose.yaml` and `.env.example`.
-- Application data: `$HOME/containers`, separate from the project workspace.
-- Each application is a separate Compose project and Arcane Git Pull project:
-  `mpd`, `mympd`, `music-assistant`, and `newt`.
-- Arcane is bootstrapped separately from the other application projects.
-  Its application data must not be overwritten by a Git sync.
-- Keep project names explicit where needed so relocating Compose files does
-  not silently change Docker network names.
+- Raspberry Pi 4B 4 GB, booting from SD card (MBR: FAT32 firmware partition,
+  ext4 root that grows on first boot), Ethernet only (Wi-Fi and
+  Bluetooth disabled with device tree overlays).
+- NixOS stable (`nixos-26.05`), pinned by `flake.lock`. Updates are
+  deliberate: update the lock, build, deploy, verify.
+- Mainline LTS kernel (`pkgs.linuxPackages`), which is in the binary cache.
+  Boot chain: GPU firmware, then U-Boot, then `extlinux.conf`. `config.txt`
+  and the firmware partition are generated from Nix and rewritten on every
+  switch (`hardware.raspberry-pi.firmware.enable`).
+- Login user `pi`, SSH keys only (from GitHub), passwordless `sudo` for
+  deployment.
+- Hostname `rpi`, reachable as `rpi.local` (avahi). DHCP, with a reservation
+  on the router rather than a static IP.
+- Logs in RAM (journald volatile), zram swap, hardware watchdog, weekly Nix
+  garbage collection.
 
-## Service and network requirements
+## Services
 
-- **MPD** uses `/dev/snd`, exposes port `6600`, and serves the music and
-  playlist directories read-only to clients where applicable.
-- **myMPD** is a separate Compose project, exposes HTTP on host port `80`,
-  and joins MPD's external `mpd_default` network to connect to MPD.
-- **Newt** is a separate project and joins myMPD's external `mympd_default`
-  network so the tunnel can reach myMPD. Deploy myMPD before Newt to create
-  that network.
-- **Music Assistant** uses host networking for discovery and streaming.
-- Preserve stable service/container names unless explicitly changed by the
-  user.
-- All five services use Docker's `json-file` logging driver with `max-size:
-  "10m"` and `max-file: "3"`. These limits cover container stdout/stderr,
-  not log files written inside application data directories.
+- **Music Assistant**: the official image
+  `ghcr.io/music-assistant/server`, pinned by tag and digest, run with Docker
+  (`virtualisation.oci-containers`) and host networking. This is an install
+  method upstream supports. Web UI on port 8095. State in
+  `/var/lib/music-assistant` (mounted as `/data`).
+- **Sendspin player**: the `sendspin` client in daemon mode as a native
+  systemd service, named "Bucătărie", playing to the Creative Pebble V3
+  speakers over USB (selected by the name prefix `Pebble V3`; 48 kHz/16-bit,
+  hardware volume on its `PCM` mixer via `amixer`). The onboard 3.5 mm
+  jack does not work with the mainline kernel and the firmware device tree
+  (see `docs/LESSONS.md`). Package from `nixos-unstable` (stable is too
+  old). State in `/var/lib/sendspin`. Keep its version compatible with
+  the Music Assistant image; update them together.
+- **Newt**: native `services.newt`, tunnel to the user's Pangolin server.
+  Pangolin resources target local services (Music Assistant:
+  `http://localhost:8095`).
+- **Tailscale**: second, independent remote path. Logged in once
+  interactively; key expiry disabled for this machine. State in
+  `/var/lib/tailscale`.
+- Not used: MPD, myMPD, Arcane, Squeezelite.
 
-## Data and secrets
+## Network
 
-- Intended persistent application data paths are below
-  `$HOME/containers/<project>/`.
-- Compose host paths use `${HOME:?HOME must be configured}` rather than a user-specific absolute home
-  path. Arcane deployments must receive the correct `HOME` value; verify this
-  through Arcane's environment-scoped global Variables before deploying.
-  Project-local `.env` values override the shared value.
-- Real environment files, credentials, and encryption keys stay local and
-  are excluded from Git. Commit only placeholder `.env.example` files.
-- Arcane's encryption key must be backed up securely with Arcane's application
-  data.
+- The LAN interface `eth0` and `tailscale0` are trusted by the firewall.
+  Music Assistant needs mDNS, streaming and Spotify Connect ports that are
+  chosen at runtime.
 
-## Current migration state
+## Secrets and access
 
-The migration is complete. The user confirmed all applications work and
-their data is present after the final Arcane deployments.
+- The repository is public: no credentials, no SSH keys and no encrypted
+  secrets in Git.
+- `pi`'s SSH keys are imported once, on first boot, from
+  `ssh-import-id gh:LCernei` into `~pi/.ssh/authorized_keys` (only
+  while that file does not exist).
+- Newt credentials (`PANGOLIN_ENDPOINT`, `NEWT_ID`, `NEWT_SECRET`) are copied
+  to `/var/lib/secrets/newt.env` (root, mode 0600) by hand. Newt starts only
+  once that file exists.
 
-MPD, myMPD, Music Assistant, and Newt have been recreated through Arcane Git
-Pull, with their workspace at `$HOME/containers/arcane/projects` and persistent
-application data under `$HOME/containers`.
-All five containers, including Arcane, were verified running with zero
-restarts; application bind mounts and cross-project networks were checked.
-myMPD and Music Assistant returned HTTP 200 after recreation.
-Application data and local secrets were retained. After functional verification,
-the previous MPD, myMPD, and Music Assistant data under `$HOME/docker` was
-removed with the user's approval. Dockge was subsequently stopped and removed,
-including its files and the empty `$HOME/docker` directory. Arcane is the sole
-deployment manager. Newt has no persistent bind-mounted application data.
+## Application state (back up; not in Git)
 
-Basic runtime checks passed after migration: MPD returned its protocol
-greeting, myMPD returned HTTP 200 and connected to MPD, Music Assistant
-returned HTTP 200 on port 8095, and Newt was running on `mympd_default`.
-The user subsequently confirmed successful use of all applications.
-
-Arcane is bootstrapped separately, with application data at
-`$HOME/containers/arcane/data` and `$HOME/containers/arcane/projects` as its
-projects directory. These are separate sibling directories; no project is
-synced over Arcane's database directory.
-The former checkout is no longer present. Temporary migration backups were
-removed with the user's approval; active application data and local
-configuration remain intact. Never sync a project over Arcane's live
-application data.
+- `/var/lib/music-assistant`: settings, library, provider credentials
+  (Spotify).
+- `/var/lib/sendspin`: client identity and pairing.
+- `/var/lib/tailscale`: node identity (optional; re-login also works).
+- `/var/lib/secrets/newt.env`: Newt credentials.
+- Copy SQLite databases only with Music Assistant stopped, preserving
+  ownership and the `-wal`/`-shm` files.
 
 ## Change acceptance checks
 
-Before deploying an affected project:
-
 1. Compare changes with this spec and `docs/LESSONS.md`.
-2. Verify local secrets and environment values are available without adding
-   them to Git.
-3. Run `docker compose config --quiet` on the Pi for the affected project.
-4. Back up persistent data and confirm the required external networks exist.
-5. Apply one project at a time and verify service health and its dependent
-   connections before continuing.
+2. `nix flake check` and build the system (`nix build
+   .#nixosConfigurations.rpi.config.system.build.toplevel`).
+3. Deploy with `deploy .#rpi` (automatic rollback if SSH is lost).
+4. Verify: SSH and Tailscale reachable, Music Assistant on port 8095, the
+   Sendspin player present in Music Assistant and audible, the Newt tunnel
+   works remotely.
 
-Update this spec when the user confirms a durable change to intended
-architecture or operating behavior.
+## Current state
+
+Installed on a new SD card on 2026-11-26 and running. Verified: boot,
+Ethernet, SSH as `pi` with the key imported from GitHub, watchdog, deploy
+with deploy-rs, Sendspin on the Pebble registered in Music Assistant,
+Music Assistant restored from the Debian data (2.10.13), Newt tunnel
+connected. The old Debian card is kept intact as a fallback (containers
+stopped).

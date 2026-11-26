@@ -1,9 +1,8 @@
-# Local environment files and secrets
+# Nix build outputs
+result
+result-*
+.direnv/
+
+# Never commit plaintext secrets; secrets/*.yaml are sops-encrypted.
 .env
 .env.*
-!.env.example
-**/secrets/
-
-# Local runtime data
-**/data/
-**/logs/
