@@ -44,9 +44,9 @@ are not stored in Git.
   the Music Assistant image; update them together. The service is bound
   to the Pebble's device unit (`/dev/snd/by-id/usb-ACTIONS_Pebble_V3-00`):
   it starts when the Pebble appears on USB and stops when it disappears.
-- The Pebble takes power and audio over one USB cable. After losing power
-  it needs its knob turned off and on before it plays again; there is no
-  software recovery for that (see `docs/LESSONS.md`).
+- The Pebble takes power and audio over one USB cable. After a power loss
+  it usually plays again by itself, but it has twice needed its knob turned
+  off and on (see `docs/LESSONS.md`).
 - **Resume after restart** (`music-assistant-resume`): Music Assistant keeps
   its queues across restarts but does not resume them. A timer saves which
   queues are playing every minute (a queue whose player is unavailable keeps

@@ -77,14 +77,21 @@ returning player but did not resume its stream. Hence Sendspin is bound to
 the Pebble's device unit and the resume helper also runs when Sendspin
 starts.
 
-## 2026-11-27: The Pebble needs its knob after a power loss
+## 2026-11-27: Pebble behaviour after a power loss is inconsistent
 
 The Pebble V3 takes power and audio over one USB cable. `uhubctl` (2.6.0)
-can cut the Pi 4's ganged USB power (hubs `1-1` and `2` both off), and the
-Pebble then re-enumerates about 9 s after power returns, LED on, but stays
-silent while audio streams to it. Turning the knob off and on restores sound.
-After the watchdog reset on 2026-11-27 it did not even re-enumerate until the
-knob was turned. A software USB power cycle therefore does not recover it.
+can cut the Pi 4's ganged USB power (hubs `1-1` and `2` both off); the Pebble
+re-enumerates about 9 s after power returns. Observed outcomes:
+
+- After the watchdog reset: not on USB at all until the knob was turned.
+- First `uhubctl` cycle: on USB, LED on, audio streaming to it, but silent
+  until the knob was turned off and on. Sendspin had been stuck on the
+  removed device and was restarted by hand before playback.
+- A full power cut of the Pi, and a second `uhubctl` cycle (with Sendspin
+  bound to the device and the resume helper): played without the knob.
+
+The cause of the two failures is unknown. Turning the knob off and on
+recovers it.
 
 ## Retired setup: Debian, Docker Compose and Arcane (until 2026-11)
 
