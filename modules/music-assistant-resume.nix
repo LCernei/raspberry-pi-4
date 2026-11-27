@@ -26,8 +26,9 @@ let
       state="${stateDir}/playing.json"
       token="$(<"$CREDENTIALS_DIRECTORY/token")"
 
+      # api JSON [TIMEOUT]: one Music Assistant API command.
       api() {
-        curl -fsS --max-time 15 \
+        curl -fsS --max-time "''${2:-15}" \
           -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
           -d "$1" http://127.0.0.1:8095/api
       }
@@ -78,12 +79,17 @@ let
             fi
             if [[ "$(jq -r '.available // false' <<<"$queue")" == true ]]; then
               echo "resuming queue $queue_id ($(jq -r '.display_name' <<<"$queue"))"
-              api "$(jq -nc --arg q "$queue_id" \
-                '{command: "player_queues/resume", args: {queue_id: $q}}')" >/dev/null ||
+              # Right after a start, Music Assistant can take 15 s or more to
+              # answer: the call returns once playback has started.
+              if api "$(jq -nc --arg q "$queue_id" \
+                '{command: "player_queues/resume", args: {queue_id: $q}}')" 60 >/dev/null; then
+                sleep 5
+              else
                 echo "resume of $queue_id failed, retrying"
-              sleep 30
+                sleep 15
+              fi
             else
-              sleep 10
+              sleep 2
             fi
           done
         done
