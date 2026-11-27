@@ -7,6 +7,7 @@
     ./hardware.nix
     ../../modules/github-ssh-keys.nix
     ../../modules/music-assistant.nix
+    ../../modules/music-assistant-resume.nix
     ../../modules/sendspin.nix
     ../../modules/newt.nix
     ../../modules/tailscale.nix
@@ -56,8 +57,15 @@
     };
   };
 
-  # Keep logs in RAM to spare the SD card.
-  services.journald.storage = "volatile";
+  # Keep logs across reboots, so a hang that ends in a watchdog reset can be
+  # diagnosed. Capped and flushed every 30 s: a small, steady write load.
+  services.journald = {
+    storage = "persistent";
+    extraConfig = ''
+      SystemMaxUse=200M
+      SyncIntervalSec=30s
+    '';
+  };
   zramSwap.enable = true;
 
   # Hardware watchdog: reboot if the system hangs.

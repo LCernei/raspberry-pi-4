@@ -23,8 +23,9 @@ are not stored in Git.
   deployment.
 - Hostname `rpi`, reachable as `rpi.local` (avahi). DHCP, with a reservation
   on the router rather than a static IP.
-- Logs in RAM (journald volatile), zram swap, hardware watchdog, weekly Nix
-  garbage collection.
+- Persistent journal on the SD card (capped at 200 MB, synced every 30 s)
+  so logs survive a watchdog reset; zram swap, hardware watchdog, weekly
+  Nix garbage collection.
 
 ## Services
 
@@ -40,7 +41,20 @@ are not stored in Git.
   jack does not work with the mainline kernel and the firmware device tree
   (see `docs/LESSONS.md`). Package from `nixos-unstable` (stable is too
   old). State in `/var/lib/sendspin`. Keep its version compatible with
-  the Music Assistant image; update them together.
+  the Music Assistant image; update them together. The service is bound
+  to the Pebble's device unit (`/dev/snd/by-id/usb-ACTIONS_Pebble_V3-00`):
+  it starts when the Pebble appears on USB and stops when it disappears.
+- The Pebble takes power and audio over one USB cable. After a power loss
+  it usually plays again by itself, but it has twice needed its knob turned
+  off and on (see `docs/LESSONS.md`).
+- **Resume after restart** (`music-assistant-resume`): Music Assistant keeps
+  its queues across restarts but does not resume them. A timer saves which
+  queues are playing every minute (a queue whose player is unavailable keeps
+  its entry); each time Music Assistant or Sendspin starts, those
+  queues are resumed once their players are available (for up to 30
+  minutes). Stopped queues stay stopped. Uses a long-lived Music Assistant
+  token in `/var/lib/secrets/music-assistant.token`; without it, the helper
+  does not run.
 - **Newt**: native `services.newt`, tunnel to the user's Pangolin server.
   Pangolin resources target local services (Music Assistant:
   `http://localhost:8095`).
@@ -65,6 +79,9 @@ are not stored in Git.
 - Newt credentials (`PANGOLIN_ENDPOINT`, `NEWT_ID`, `NEWT_SECRET`) are copied
   to `/var/lib/secrets/newt.env` (root, mode 0600) by hand. Newt starts only
   once that file exists.
+- A long-lived Music Assistant token for the resume helper is copied to
+  `/var/lib/secrets/music-assistant.token` (root, mode 0600) by hand. It
+  expires after a year.
 
 ## Application state (back up; not in Git)
 
@@ -73,6 +90,7 @@ are not stored in Git.
 - `/var/lib/sendspin`: client identity and pairing.
 - `/var/lib/tailscale`: node identity (optional; re-login also works).
 - `/var/lib/secrets/newt.env`: Newt credentials.
+- `/var/lib/secrets/music-assistant.token`: the resume helper's token.
 - Copy SQLite databases only with Music Assistant stopped, preserving
   ownership and the `-wal`/`-shm` files.
 

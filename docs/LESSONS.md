@@ -53,6 +53,46 @@ Pi OS card. Also, the stable nixpkgs `raspberrypi-eeprom` ships an older Pi 4
 bootloader (2026-01-09) than the one installed; `--apply` with its default
 image would downgrade.
 
+## 2026-11-27: Music Assistant does not resume after a restart
+
+Music Assistant 2.10.13 restores queue items and position from its cache
+when a player registers, but recalculates the playback state from the player
+(idle) and never resumes. Unattended recovery needs an external call to
+`player_queues/resume` (here `modules/music-assistant-resume.nix`). The HTTP
+API (`POST /api`) requires a bearer token; long-lived tokens expire after
+365 days in the server code, although the UI text says 10 years.
+
+## 2026-11-27: Switching journald to persistent storage needs a flush
+
+After deploying `services.journald.storage = "persistent"`, journald was
+restarted but kept writing to `/run/log/journal`; `/var/log/journal` appeared
+only after `journalctl --flush`. Later boots flush automatically.
+
+## 2026-11-27: Sendspin keeps a removed USB device open
+
+When the Pebble left and re-joined USB, `sendspin` 9.1.0 kept its handle to
+the removed PCM device (`/dev/snd/pcmC0D0p (deleted)`), logged nothing and
+played nothing until restarted. Music Assistant 2.10.13 then registered the
+returning player but did not resume its stream. Hence Sendspin is bound to
+the Pebble's device unit and the resume helper also runs when Sendspin
+starts.
+
+## 2026-11-27: Pebble behaviour after a power loss is inconsistent
+
+The Pebble V3 takes power and audio over one USB cable. `uhubctl` (2.6.0)
+can cut the Pi 4's ganged USB power (hubs `1-1` and `2` both off); the Pebble
+re-enumerates about 9 s after power returns. Observed outcomes:
+
+- After the watchdog reset: not on USB at all until the knob was turned.
+- First `uhubctl` cycle: on USB, LED on, audio streaming to it, but silent
+  until the knob was turned off and on. Sendspin had been stuck on the
+  removed device and was restarted by hand before playback.
+- A full power cut of the Pi, and a second `uhubctl` cycle (with Sendspin
+  bound to the device and the resume helper): played without the knob.
+
+The cause of the two failures is unknown. Turning the knob off and on
+recovers it.
+
 ## Retired setup: Debian, Docker Compose and Arcane (until 2026-11)
 
 The findings below apply to the previous setup on the old SD card.
