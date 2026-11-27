@@ -4,18 +4,26 @@
   inputs,
   lib,
   pkgs,
+  utils,
   ...
 }:
 
 let
   # Stable 26.05 ships sendspin 5.9, too old for current Music Assistant.
   unstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+  # The Pebble's sound card, as a systemd device unit.
+  pebbleDevice = "${utils.escapeSystemdPath "/dev/snd/by-id/usb-ACTIONS_Pebble_V3-00"}.device";
 in
 {
   systemd.services.sendspin = {
     description = "Sendspin player for Music Assistant";
-    wantedBy = [ "multi-user.target" ];
+    # Runs only while the Pebble is on USB: started when it appears, stopped
+    # when it goes. Sendspin does not notice a re-plugged device by itself:
+    # it keeps the removed one open and plays nothing.
+    wantedBy = [ pebbleDevice ];
+    bindsTo = [ pebbleDevice ];
     after = [
+      pebbleDevice
       "network-online.target"
       "sound.target"
     ];

@@ -13,7 +13,8 @@ flake.nix                 inputs, the rpi system, SD image, deploy-rs node, dev 
 hosts/rpi/default.nix     users, SSH, network, logging, watchdog, Nix settings
 hosts/rpi/hardware.nix    Pi 4 boot chain, kernel, firmware partition, config.txt
 modules/music-assistant.nix   official Music Assistant image (Docker, host network)
-modules/sendspin.nix      Sendspin player (systemd)
+modules/sendspin.nix      Sendspin player (runs while the Pebble is on USB)
+modules/music-assistant-resume.nix   resume playing queues after a restart
 modules/github-ssh-keys.nix   pi's SSH keys, imported from GitHub on first boot
 modules/newt.nix          Newt tunnel (credentials copied to the Pi by hand)
 modules/tailscale.nix     Tailscale
@@ -93,10 +94,19 @@ backed-up state: Music Assistant's data and `newt.env`.
    MPD player provider and set up Spotify Connect for the "Bucătărie"
    Sendspin player.
 
-6. **Log in to Tailscale** once with `sudo tailscale up`, then disable key
+6. **Give the resume helper a token.** In Music Assistant, create a
+   long-lived token under your profile (it expires after a year), then:
+
+   ```sh
+   ssh pi@rpi.local 'umask 077; cat > /tmp/ma.token && sudo install -m 0600 -o root -g root /tmp/ma.token /var/lib/secrets/music-assistant.token && rm /tmp/ma.token && sudo systemctl start music-assistant-resume-record'
+   ```
+
+   Paste the token, press Enter, then Ctrl-D.
+
+7. **Log in to Tailscale** once with `sudo tailscale up`, then disable key
    expiry for this machine in the Tailscale admin console.
 
-7. **Check:**
+8. **Check:**
    - Music Assistant opens at `http://rpi.local:8095` with the restored
      settings, and Spotify still works.
    - The "Bucătărie" Sendspin player is listed and plays on the Pebble (USB).
@@ -145,3 +155,4 @@ keys live only on the card: a freshly flashed card imports just the user in
 
 Never commit credentials or keys. To change Newt's credentials, replace
 `/var/lib/secrets/newt.env` on the Pi and run `sudo systemctl restart newt`.
+To renew the resume helper's token (yearly), repeat setup step 6.
